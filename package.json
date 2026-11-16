@@ -1,0 +1,12 @@
+{
+  "name": "shinigami-overdrive",
+  "private": true,
+  "description": "Anime hack and slash FPS (browser). Dev tools only; the game itself has no build step.",
+  "scripts": {
+    "build": "node tools/build.js",
+    "serve": "node tools/serve.js",
+    "simtest": "node tools/simtest.js 120 2",
+    "test": "node tools/simtest.js 60 2 && node tools/movetest.js && node tools/maptest.js && node tools/destructtest.js && node tools/abilitytest.js",
+    "sounds": "node tools/embed-sounds.js"
+  }
+}

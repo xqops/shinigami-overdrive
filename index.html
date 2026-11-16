@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shinigami Overdrive</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--BODY-->
+<canvas id="game"></canvas>
+
+<div id="hud" hidden>
+  <div id="crosshair"><i></i><i></i><i></i><i></i><b></b></div>
+  <div id="charge"><div></div></div>
+
+  <div id="wave"><span id="waveKanji">第一波</span><span id="remain">残 0</span></div>
+  <div id="score"><span id="scoreVal">0</span></div>
+
+  <div id="boss" hidden>
+    <div class="boss-name">阿修羅</div>
+    <div class="boss-bar"><div id="bossFill"></div></div>
+  </div>
+
+  <div id="style">
+    <div id="rankLetter">D</div>
+    <div class="gauge"><div id="rankFill"></div></div>
+    <ul id="feed"></ul>
+  </div>
+
+  <div id="vitals">
+    <div class="vrow"><span class="vk">血</span><div class="bar hp"><div id="hpFill"></div></div><span id="hpText">100</span></div>
+    <div class="vrow"><span class="vk">気</span><div class="bar en"><div id="enFill"></div><span class="tick" style="left:25%"></span><span class="tick" style="left:50%"></span><span class="tick" style="left:75%"></span></div></div>
+    <div id="dash"><i></i><i></i><i></i></div>
+  </div>
+
+  <div id="loadout">
+    <div id="weapons"></div>
+    <div id="powers"></div>
+  </div>
+
+  <div id="banner"><div id="bannerBig"></div><div id="bannerSmall"></div></div>
+  <div id="pops"></div>
+</div>
+
+<div id="title" class="screen">
+  <div class="title-wrap">
+    <div class="sun" aria-hidden="true"></div>
+    <div class="title-kanji">死神</div>
+    <h1>SHINIGAMI OVERDRIVE</h1>
+    <p class="tagline">Papel, tinta e sangue. Corte os yokai antes que o sangue acabe.</p>
+    <div class="menu">
+      <button id="btnPlay" class="primary">始 JOGAR</button>
+      <button id="btnGrimoire">術 PODERES</button>
+      <button id="btnSettings">設 CONFIGURAÇÕES</button>
+      <button disabled title="A arquitetura já está pronta. Veja docs/MULTIPLAYER.md">共 MULTIPLAYER (EM BREVE)</button>
+    </div>
+  </div>
+  <div class="controls">
+    <h2>操作</h2>
+    <dl>
+      <dt>WASD</dt><dd>Mover</dd>
+      <dt>Espaço</dt><dd>Pular, pulo duplo, pulo na parede. Segure para bunny hop</dd>
+      <dt>Shift</dt><dd>Dash (invencível)</dd>
+      <dt>C</dt><dd>Deslizar. No ar: slam</dd>
+      <dt>Clique esq.</dt><dd>Combo (segure para encadear)</dd>
+      <dt>Clique dir.</dt><dd>Katana: iaidō. Foice: arremesso. Zanbatō: uppercut / meteoro</dd>
+      <dt>Q R G</dt><dd>Habilidades da sua escola (escolha em 術 PODERES)</dd>
+      <dt>E</dt><dd>瞬歩 teleporte atrás do alvo</dd>
+      <dt>F</dt><dd>奥義 ultimate da escola (carrega com o estilo)</dd>
+      <dt>1 2 3</dt><dd>Katana, foice, zanbatō</dd>
+      <dt>T</dt><dd>Inspecionar arma</dd>
+    </dl>
+    <p class="tip">Ferir de perto cura. Estrela branca: rebata com a lâmina. Estrela vermelha: saia da frente. A máscara do Oni bloqueia golpes de frente.</p>
+  </div>
+</div>
+
+<div id="pause" class="screen" hidden>
+  <div class="title-wrap">
+    <div class="title-kanji small">休</div>
+    <div class="menu">
+      <button id="btnResume" class="primary">続 CONTINUAR</button>
+      <button id="btnGrimoire2">術 PODERES</button>
+      <button id="btnSettings2">設 CONFIGURAÇÕES</button>
+      <button id="btnRestart">再 REINICIAR</button>
+      <button id="btnMenu">戻 MENU</button>
+    </div>
+  </div>
+</div>
+
+<div id="death" class="screen" hidden>
+  <div class="title-wrap">
+    <div class="title-kanji blood">死</div>
+    <div id="deathStats" class="stats"></div>
+    <div class="menu">
+      <button id="btnRetry" class="primary">再 TENTAR DE NOVO <kbd>R</kbd></button>
+      <button id="btnMenu2">戻 MENU</button>
+    </div>
+  </div>
+</div>
+
+<div id="grimoire" class="screen panel" hidden>
+  <div class="grim-card">
+    <h2>術 Grimório</h2>
+    <p class="grim-hint">Escolha sua escola de poder: as três habilidades vão em Q, R e G e a ultimate em F (carrega com o medidor de estilo). E é o teleporte básico.</p>
+    <div id="grimSlots" class="grim-slots"></div>
+    <div id="grimList" class="grim-list"></div>
+    <button id="btnCloseGrim" class="primary">戻 VOLTAR</button>
+  </div>
+</div>
+
+<div id="settings" class="screen panel" hidden>
+  <div class="settings-card">
+    <h2>設定</h2>
+    <label>Sensibilidade <output id="oSens"></output><input id="sSens" type="range" min="0.2" max="3" step="0.05"></label>
+    <label>Campo de visão <output id="oFov"></output><input id="sFov" type="range" min="70" max="120" step="1"></label>
+    <label>Tamanho do pixel
+      <select id="sScale">
+        <option value="0.3">Muito grande (mais rápido)</option>
+        <option value="0.4">Grande</option>
+        <option value="0.55">Médio</option>
+        <option value="0.75">Pequeno</option>
+      </select>
+    </label>
+    <label>Volume geral <output id="oVol"></output><input id="sVol" type="range" min="0" max="1" step="0.05"></label>
+    <label>Música <output id="oMus"></output><input id="sMus" type="range" min="0" max="1" step="0.05"></label>
+    <label>Efeitos <output id="oSfx"></output><input id="sSfx" type="range" min="0" max="1" step="0.05"></label>
+    <label>Tremor de tela <output id="oShake"></output><input id="sShake" type="range" min="0" max="1.5" step="0.05"></label>
+    <label class="check"><input id="sCalm" type="checkbox"> Modo calmo (sem inversões de tela e com ultimates suaves)</label>
+    <label class="check"><input id="sInvert" type="checkbox"> Inverter eixo Y</label>
+    <button id="btnCloseSettings" class="primary">戻 VOLTAR</button>
+  </div>
+</div>
+
+<div id="warn">A Expansão de Domínio tem cores piscando. Ative o <b>Modo calmo</b> nas configurações se for sensível a flashes.</div>
+<!--/BODY-->
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/GLTFLoader.js"></script>
+<script src="vendor/SkeletonUtils.js"></script>
+<script src="src/assets/models.js"></script>
+<script src="src/assets/sounds.js"></script>
+<script src="src/core/util.js"></script>
+<script src="src/core/input.js"></script>
+<script src="src/sim/arena.js"></script>
+<script src="src/sim/weapons.js"></script>
+<script src="src/sim/charweapons.js"></script>
+<script src="src/sim/world.js"></script>
+<script src="src/sim/player.js"></script>
+<script src="src/sim/enemies.js"></script>
+<script src="src/sim/projectiles.js"></script>
+<script src="src/sim/waves.js"></script>
+<script src="src/sim/schools.js"></script>
+<script src="src/sim/kit.js"></script>
+<script src="src/sim/status.js"></script>
+<script src="src/sim/allies.js"></script>
+<script src="src/sim/powers.js"></script>
+<script src="src/sim/abilities-1.js"></script>
+<script src="src/sim/abilities-2.js"></script>
+<script src="src/sim/abilities-3.js"></script>
+<script src="src/sim/abilities-4.js"></script>
+<script src="src/sim/destruct.js"></script>
+<script src="src/net/net.js"></script>
+<script src="src/audio/audio.js"></script>
+<script src="src/audio/abilitysfx.js"></script>
+<script src="src/audio/sfx/schools-a.js"></script>
+<script src="src/audio/sfx/schools-b.js"></script>
+<script src="src/audio/sfx/weapons.js"></script>
+<script src="src/assets/sprites.js"></script>
+<script src="src/assets/icons.js"></script>
+<script src="src/render/voxel.js"></script>
+<script src="src/render/models.js"></script>
+<script src="src/render/textures.js"></script>
+<script src="src/render/materials.js"></script>
+<script src="src/render/fx.js"></script>
+<script src="src/render/ground.js"></script>
+<script src="src/render/rubble.js"></script>
+<script src="src/render/afx.js"></script>
+<script src="src/render/afx/souls.js"></script>
+<script src="src/render/afx/void.js"></script>
+<script src="src/render/afx/demon.js"></script>
+<script src="src/render/afx/summon.js"></script>
+<script src="src/render/afx/blood.js"></script>
+<script src="src/render/afx/aegis.js"></script>
+<script src="src/render/afx/meteor.js"></script>
+<script src="src/render/afx/fire.js"></script>
+<script src="src/render/afx/plasma.js"></script>
+<script src="src/render/afx/ice.js"></script>
+<script src="src/render/afx/gravity.js"></script>
+<script src="src/render/afx/bullets.js"></script>
+<script src="src/render/afx/spear.js"></script>
+<script src="src/render/afx/shadow.js"></script>
+<script src="src/render/afx/wind.js"></script>
+<script src="src/render/afx/regen.js"></script>
+<script src="src/render/afx/thunder.js"></script>
+<script src="src/render/afx/dark.js"></script>
+<script src="src/render/afx/chaos.js"></script>
+<script src="src/render/afx/elemental.js"></script>
+<script src="src/render/arms.js"></script>
+<script src="src/render/gestures.js"></script>
+<script src="src/render/cweapons.js"></script>
+<script src="src/render/cweapons/01-souls.js"></script>
+<script src="src/render/cweapons/02-void.js"></script>
+<script src="src/render/cweapons/03-demon.js"></script>
+<script src="src/render/cweapons/04-summon.js"></script>
+<script src="src/render/cweapons/05-blood.js"></script>
+<script src="src/render/cweapons/06-aegis.js"></script>
+<script src="src/render/cweapons/07-meteor.js"></script>
+<script src="src/render/cweapons/08-fire.js"></script>
+<script src="src/render/cweapons/09-plasma.js"></script>
+<script src="src/render/cweapons/10-ice.js"></script>
+<script src="src/render/cweapons/11-gravity.js"></script>
+<script src="src/render/cweapons/12-bullets.js"></script>
+<script src="src/render/cweapons/13-spear.js"></script>
+<script src="src/render/cweapons/14-shadow.js"></script>
+<script src="src/render/cweapons/15-wind.js"></script>
+<script src="src/render/cweapons/16-regen.js"></script>
+<script src="src/render/cweapons/17-thunder.js"></script>
+<script src="src/render/cweapons/18-dark.js"></script>
+<script src="src/render/cweapons/19-chaos.js"></script>
+<script src="src/render/cweapons/20-elemental.js"></script>
+<script src="src/render/viewmodel.js"></script>
+<script src="src/render/views.js"></script>
+<script src="src/render/scene.js"></script>
+<script src="src/ui/icons.js"></script>
+<script src="src/ui/hud.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>

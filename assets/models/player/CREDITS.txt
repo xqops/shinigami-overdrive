@@ -1,0 +1,3 @@
+arms.glb: "Rigged Fps Arms" by J-Toastie, via Poly Pizza (https://poly.pizza)
+License: CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/)
+Used unmodified; recolored and posed at runtime by src/render/arms.js.
